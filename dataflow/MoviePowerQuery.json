@@ -1,0 +1,20 @@
+{
+	"name": "MoviePowerQuery",
+	"properties": {
+		"type": "WranglingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"name": "MoveAggregation",
+					"script": "source(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~> MoveAggregation",
+					"dataset": {
+						"referenceName": "MoveAggregation",
+						"type": "DatasetReference"
+					}
+				}
+			],
+			"sinks": [],
+			"script": "section Section1;\r\nshared MoveAggregation = let\r\n  AdfDoc = AzureStorage.DataLakeContents(\"https://stuartazuredemolake.dfs.core.windows.net/movies-data-output/part-00000-tid-3230354787206000264-cceef1a6-874b-476e-8203-396ab716dce3-27-1-c000.csv\"),\r\n  Csv = Csv.Document(AdfDoc, [Delimiter = \",\", Encoding = TextEncoding.Utf8, QuoteStyle = QuoteStyle.Csv]),\r\n  PromotedHeaders = Table.PromoteHeaders(Csv, [PromoteAllScalars = true])\r\nin\r\n  PromotedHeaders;\r\nshared UserQuery = let\r\n  Source = MoveAggregation,\r\n  #\"Removed columns\" = Table.RemoveColumns(Source, {\"NumberOfMoves\"}),\r\n  #\"Choose columns\" = Table.SelectColumns(#\"Removed columns\", {\"PrimaryGenre\", \"year\", \"HighestRated\", \"LowestRated\"})\r\nin\r\n  #\"Choose columns\";\r\n"
+		}
+	}
+}

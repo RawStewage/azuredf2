@@ -1,0 +1,47 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "MoviesALDS",
+						"type": "DatasetReference"
+					},
+					"name": "MovieALDS"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "MoveAggregation",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "SpellingCorrection"
+				},
+				{
+					"name": "NewEnough"
+				},
+				{
+					"name": "PrimayGenre"
+				},
+				{
+					"name": "MovieRanking"
+				},
+				{
+					"name": "YearGenreAggregation"
+				},
+				{
+					"name": "AlterRow1"
+				}
+			],
+			"script": "source(output(\n\t\tmovie as string,\n\t\ttitle as string,\n\t\tgenres as string,\n\t\tyear as string,\n\t\tRating as string,\n\t\t{Rotton Tomato} as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~> MovieALDS\nMovieALDS select(mapColumn(\n\t\tmovie,\n\t\ttitle,\n\t\tgenres,\n\t\tyear,\n\t\tRating,\n\t\t{Rotten Tomato} = {Rotton Tomato}\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SpellingCorrection\nSpellingCorrection filter(toInteger(year) > 1951) ~> NewEnough\nNewEnough derive(PrimaryGenre = iif(locate(\"|\", genres) > 1, left(genres, locate(\"|\", genres)-1), genres)) ~> PrimayGenre\nPrimayGenre window(over(PrimaryGenre,\n\t\tyear),\n\tasc(Rating, true),\n\tRatingRank = rank()) ~> MovieRanking\nMovieRanking aggregate(groupBy(PrimaryGenre,\n\t\tyear),\n\tAverageRating = avg(toInteger({Rotten Tomato})),\n\t\tHighestRated = first(title),\n\t\tLowestRated = last(title),\n\t\tNumberOfMoves = count()) ~> YearGenreAggregation\nYearGenreAggregation alterRow(upsertIf(true())) ~> AlterRow1\nAlterRow1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tPrimaryGenre as string,\n\t\tyear as string,\n\t\tAverageRating as string,\n\t\tHighestRated as string,\n\t\tLowestRated as string,\n\t\tNumberOfMoves as string\n\t),\n\tumask: 0022,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> sink1"
+		}
+	}
+}

@@ -1,0 +1,9 @@
+{
+	"name": "stuartcertdf",
+	"location": "canadacentral",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "b2409151-f0ca-4f4d-af01-58eeb1708f34",
+		"tenantId": "ee069fca-d7fe-45aa-9dfc-1ff646c752ee"
+	}
+}
