@@ -43,7 +43,8 @@
 						"activity": "Power Query1",
 						"dependencyConditions": [
 							"Succeeded",
-							"Completed"
+							"Completed",
+							"Skipped"
 						]
 					},
 					{
